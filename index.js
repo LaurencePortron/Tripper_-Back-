@@ -155,6 +155,8 @@ app.get('/dashboard', (req, res) => {
   res.end();
 });
 
+// get all trips list
+
 app.get('/trips', (req, res) => {
   const trips = req.body;
   connection.query('SELECT * FROM trips', [trips], (err, results) => {
@@ -166,4 +168,22 @@ app.get('/trips', (req, res) => {
       res.status(200).json(results);
     }
   });
+});
+
+// post a trip
+
+app.post('/trips', (req, res) => {
+  const { title, startDate, endDATE, description, cost } = req.body;
+  connection.query(
+    'INSERT INTO trips (title, startDate,endDATE, description, cost ) VALUES (?, ?, ?, ?,?)',
+    [title, startDate, endDATE, description, cost],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('An error occurred to add a new trip');
+      } else {
+        res.status(200).json(results);
+      }
+    }
+  );
 });
