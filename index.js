@@ -170,6 +170,25 @@ app.get('/trips', (req, res) => {
   });
 });
 
+//get one trip
+
+app.get('/trips/:id', (req, res) => {
+  const tripId = req.params.id;
+  connection.query(
+    'SELECT * FROM trips WHERE id = ?',
+    [tripId],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('An error occurred to display the selected trip');
+      } else {
+        console.log('results', results);
+        res.status(200).json(results);
+      }
+    }
+  );
+});
+
 // post a trip
 
 app.post('/trips', (req, res) => {
