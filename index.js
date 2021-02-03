@@ -154,3 +154,16 @@ app.get('/dashboard', (req, res) => {
   }
   res.end();
 });
+
+app.get('/trips', (req, res) => {
+  const trips = req.body;
+  connection.query('SELECT * FROM trips', [trips], (err, results) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send('An error occurred to display trips');
+    } else {
+      console.log('results', results);
+      res.status(200).json(results);
+    }
+  });
+});
