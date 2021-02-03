@@ -206,3 +206,57 @@ app.post('/trips', (req, res) => {
     }
   );
 });
+
+// get all activities
+
+app.get('/activities', (req, res) => {
+  const activities = req.body;
+  connection.query('SELECT * FROM activities', [activities], (err, results) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send('An error occurred to display activities');
+    } else {
+      console.log('results', results);
+      res.status(200).json(results);
+    }
+  });
+});
+
+//get one activity
+
+app.get('/activities/:id', (req, res) => {
+  const activityId = req.params.id;
+  connection.query(
+    'SELECT * FROM activities WHERE id = ?',
+    [activityId],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res
+          .status(500)
+          .send('An error occurred to display the selected activity');
+      } else {
+        console.log('results', results);
+        res.status(200).json(results);
+      }
+    }
+  );
+});
+
+// post an activity
+
+app.post('/activities', (req, res) => {
+  const { title, date, description, cost } = req.body;
+  connection.query(
+    'INSERT INTO activities (title, date, description, cost ) VALUES (?, ?, ?, ?)',
+    [title, date, description, cost],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('An error occurred to add a new activitiy');
+      } else {
+        res.status(200).json(results);
+      }
+    }
+  );
+});
