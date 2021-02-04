@@ -1,10 +1,17 @@
 const express = require('express');
 const connection = require('./db');
 var session = require('express-session');
+const { createApi } = require('unsplash-js');
+const nodeFetch = require('node-fetch');
 
 const port = 5000;
 const app = express();
 const cors = require('cors');
+
+const unsplash = createApi({
+  accessKey: process.env.UNSPLASH_ACCESS_KEY,
+  fetch: nodeFetch,
+});
 
 app.use(express.json());
 app.use(
@@ -193,16 +200,24 @@ app.get('/trips/:id', (req, res) => {
 
 app.post('/trips', (req, res) => {
   const { title, startDate, endDATE, description, cost } = req.body;
-  connection.query(
-    'INSERT INTO trips (title, startDate,endDATE, description, cost ) VALUES (?, ?, ?, ?,?)',
-    [title, startDate, endDATE, description, cost],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to add a new trip');
-      } else {
-        res.status(200).json(results);
-      }
+  getImage(title).then(
+    (photo) => {
+      connection.query(
+        'INSERT INTO trips (title, startDate,endDATE, description, cost, photo ) VALUES (?, ?, ?, ?,?, ?)',
+        [title, startDate, endDATE, description, cost, photo],
+        (err, results) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send('An error occurred to add a new trip');
+          } else {
+            res.status(200).json(results);
+          }
+        }
+      );
+    },
+    (error) => {
+      console.log(error);
+      res.status(500).send('An error occurred to add a new trip');
     }
   );
 });
@@ -247,16 +262,24 @@ app.get('/activities/:id', (req, res) => {
 
 app.post('/activities', (req, res) => {
   const { title, date, description, cost, trip_id } = req.body;
-  connection.query(
-    'INSERT INTO activities (title, date, description, cost, trip_id  ) VALUES (?, ?, ?, ?, ?)',
-    [title, date, description, cost, trip_id],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to add a new activitiy');
-      } else {
-        res.status(200).json(results);
-      }
+  getImage(title).then(
+    (photo) => {
+      connection.query(
+        'INSERT INTO activities (title, date, description, cost, trip_id, photo ) VALUES (?, ?, ?, ?, ?, ?)',
+        [title, date, description, cost, trip_id, photo],
+        (err, results) => {
+          if (err) {
+            console.log(err);
+            res.status(500).send('An error occurred to add a new activity');
+          } else {
+            res.status(200).json(results);
+          }
+        }
+      );
+    },
+    (error) => {
+      console.log(error);
+      res.status(500).send('An error occurred to add a new activity');
     }
   );
 });
@@ -335,3 +358,10 @@ app.post('/messages', (req, res) => {
     }
   );
 });
+
+async function getImage(query) {
+  const res = await unsplash.search.getPhotos({
+    query,
+  });
+  return res.response.results[0].urls.small;
+}
