@@ -281,3 +281,57 @@ app.get('/trip/:id/activities', (req, res) => {
     }
   );
 });
+
+// get all messages in DB
+
+app.get('/messages', (req, res) => {
+  const messages = req.body;
+  connection.query('SELECT * FROM messages', [messages], (err, results) => {
+    if (err) {
+      console.log(err);
+      res.status(500).send('An error occurred to display this messages');
+    } else {
+      console.log('results', results);
+      res.status(200).json(results);
+    }
+  });
+});
+
+// get all messages associated to a trip
+
+app.get('/trip/:id/messages', (req, res) => {
+  const messageId = req.params.id;
+  connection.query(
+    'SELECT * FROM messages WHERE trip_id=?',
+    [messageId],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res
+          .status(500)
+          .send('An error occurred to display this event/s messages');
+      } else {
+        console.log('results', results);
+        res.status(200).json(results);
+      }
+    }
+  );
+});
+
+// post a message associated to trip
+
+app.post('/messages', (req, res) => {
+  const { message, date } = req.body;
+  connection.query(
+    'INSERT INTO messages (message, date) VALUES (?, ?)',
+    [message, date],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res.status(500).send('An error occurred to add a new message');
+      } else {
+        res.status(200).json(results);
+      }
+    }
+  );
+});
