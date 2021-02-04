@@ -246,10 +246,10 @@ app.get('/activities/:id', (req, res) => {
 // post an activity
 
 app.post('/activities', (req, res) => {
-  const { title, date, description, cost } = req.body;
+  const { title, date, description, cost, trip_id } = req.body;
   connection.query(
-    'INSERT INTO activities (title, date, description, cost ) VALUES (?, ?, ?, ?)',
-    [title, date, description, cost],
+    'INSERT INTO activities (title, date, description, cost, trip_id  ) VALUES (?, ?, ?, ?, ?)',
+    [title, date, description, cost, trip_id],
     (err, results) => {
       if (err) {
         console.log(err);
