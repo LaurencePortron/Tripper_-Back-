@@ -260,3 +260,24 @@ app.post('/activities', (req, res) => {
     }
   );
 });
+
+//get activities per trip
+
+app.get('/trip/:id/activities', (req, res) => {
+  const activityId = req.params.id;
+  connection.query(
+    'SELECT * FROM activities WHERE trip_id=?',
+    [activityId],
+    (err, results) => {
+      if (err) {
+        console.log(err);
+        res
+          .status(500)
+          .send('An error occurred to display this event/s activities');
+      } else {
+        console.log('results', results);
+        res.status(200).json(results);
+      }
+    }
+  );
+});
