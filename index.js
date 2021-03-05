@@ -13,6 +13,9 @@ const unsplash = createApi({
   fetch: nodeFetch,
 });
 
+const sgMail = require('@sendgrid/mail');
+sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+
 app.use(express.json());
 app.use(
   express.urlencoded({
@@ -21,7 +24,7 @@ app.use(
 );
 
 const allowedOrigins = [
-  'http://localhost:3000',
+  'http://localhost:19002',
   'http://localhost:3001',
   'http://localhost:5000',
 ];
@@ -49,312 +52,20 @@ app.get('/', (req, res) => {
   res.send('Welcome to Tripper!');
 });
 
-app.listen(port, (err) => {
-  if (err) {
-    throw new Error('Something went wrong');
+// associates image to trip/activity when submitting new trip or activity
+
+app.post('/images', (req, res) => {
+  if (!req.body.title) {
+    return res.status(400).send('No title');
   }
-  console.log('ready to code');
-});
 
-// get all users
-app.get('/users', (req, res) => {
-  const users = req.body;
-  connection.query('SELECT * FROM users', [users], (err, results) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send('An error occurred to display all users');
-    } else {
-      console.log('results', results);
-      res.status(200).json(results);
-    }
-  });
-});
-
-// get one user
-app.get('/users/:id', (req, res) => {
-  const userId = req.params.id;
-  connection.query(
-    'SELECT * FROM users WHERE id = ?',
-    [userId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to display the selected user');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// delete one user
-app.delete('/users/:id', (req, res) => {
-  const userId = req.params.id;
-  connection.query(
-    'DELETE FROM users WHERE id = ?',
-    [userId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to delete this user');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-app.get('/', function (req, res) {
-  res.sendFile(path.join(__dirname + '/LogIn.js'));
-});
-
-//add a user
-app.post('/users', (req, res) => {
-  const { username, password } = req.body;
-  connection.query(
-    'INSERT INTO users (username, password) VALUES (?, ?)',
-    [username, password],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to add a new user');
-      } else {
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// check for existing user in DB
-app.post('/login', (req, res) => {
-  const username = req.body.username;
-  const password = req.body.password;
-  if (username && password) {
-    connection.query(
-      'SELECT * FROM users WHERE username = ? AND password = ?',
-      [username, password],
-      (err, results) => {
-        if (results.length > 0) {
-          req.session.loggedin = true;
-          req.session.username = username;
-        } else {
-          res.status(401);
-          res.send('Incorrect username or password');
-        }
-        res.end();
-      }
-    );
-  } else {
-    res.send('Please enter username and password');
-    res.end();
-  }
-});
-
-// if details are correct the user will be redirected to the dashboard
-app.get('/dashboard', (req, res) => {
-  if (req.session.loggedin) {
-    res.send('Welcome back, ' + req.session.username + '!');
-  } else {
-    res.send('Please login to view this page!');
-  }
-  res.end();
-});
-
-// get all trips list
-
-app.get('/trips', (req, res) => {
-  const trips = req.body;
-  connection.query('SELECT * FROM trips', [trips], (err, results) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send('An error occurred to display trips');
-    } else {
-      console.log('results', results);
-      res.status(200).json(results);
-    }
-  });
-});
-
-//get one trip
-
-app.get('/trips/:id', (req, res) => {
-  const tripId = req.params.id;
-  connection.query(
-    'SELECT * FROM trips WHERE id = ?',
-    [tripId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to display the selected trip');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// post a trip
-
-app.post('/trips', (req, res) => {
-  const { title, startDate, endDATE, description, cost } = req.body;
-  getImage(title).then(
-    (photo) => {
-      connection.query(
-        'INSERT INTO trips (title, startDate,endDATE, description, cost, photo ) VALUES (?, ?, ?, ?,?, ?)',
-        [title, startDate, endDATE, description, cost, photo],
-        (err, results) => {
-          if (err) {
-            console.log(err);
-            res.status(500).send('An error occurred to add a new trip');
-          } else {
-            res.status(200).json(results);
-          }
-        }
-      );
+  getImage(req.body.title).then(
+    (url) => {
+      res.send({ url });
     },
     (error) => {
-      console.log(error);
-      res.status(500).send('An error occurred to add a new trip');
-    }
-  );
-});
-
-// get all activities
-
-app.get('/activities', (req, res) => {
-  const activities = req.body;
-  connection.query('SELECT * FROM activities', [activities], (err, results) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send('An error occurred to display activities');
-    } else {
-      console.log('results', results);
-      res.status(200).json(results);
-    }
-  });
-});
-
-//get one activity
-
-app.get('/activities/:id', (req, res) => {
-  const activityId = req.params.id;
-  connection.query(
-    'SELECT * FROM activities WHERE id = ?',
-    [activityId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res
-          .status(500)
-          .send('An error occurred to display the selected activity');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// post an activity
-
-app.post('/activities', (req, res) => {
-  const { title, date, description, cost, trip_id } = req.body;
-  getImage(title).then(
-    (photo) => {
-      connection.query(
-        'INSERT INTO activities (title, date, description, cost, trip_id, photo ) VALUES (?, ?, ?, ?, ?, ?)',
-        [title, date, description, cost, trip_id, photo],
-        (err, results) => {
-          if (err) {
-            console.log(err);
-            res.status(500).send('An error occurred to add a new activity');
-          } else {
-            res.status(200).json(results);
-          }
-        }
-      );
-    },
-    (error) => {
-      console.log(error);
-      res.status(500).send('An error occurred to add a new activity');
-    }
-  );
-});
-
-//get activities per trip
-
-app.get('/trip/:id/activities', (req, res) => {
-  const activityId = req.params.id;
-  connection.query(
-    'SELECT * FROM activities WHERE trip_id=?',
-    [activityId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res
-          .status(500)
-          .send('An error occurred to display this event/s activities');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// get all messages in DB
-
-app.get('/messages', (req, res) => {
-  const messages = req.body;
-  connection.query('SELECT * FROM messages', [messages], (err, results) => {
-    if (err) {
-      console.log(err);
-      res.status(500).send('An error occurred to display this messages');
-    } else {
-      console.log('results', results);
-      res.status(200).json(results);
-    }
-  });
-});
-
-// get all messages associated to a trip
-
-app.get('/trip/:id/messages', (req, res) => {
-  const messageId = req.params.id;
-  connection.query(
-    'SELECT * FROM messages WHERE trip_id=?',
-    [messageId],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res
-          .status(500)
-          .send('An error occurred to display this event/s messages');
-      } else {
-        console.log('results', results);
-        res.status(200).json(results);
-      }
-    }
-  );
-});
-
-// post a message associated to trip
-
-app.post('/messages', (req, res) => {
-  const { message, date } = req.body;
-  connection.query(
-    'INSERT INTO messages (message, date) VALUES (?, ?)',
-    [message, date],
-    (err, results) => {
-      if (err) {
-        console.log(err);
-        res.status(500).send('An error occurred to add a new message');
-      } else {
-        res.status(200).json(results);
-      }
+      console.log('error', error);
+      res.status(500).send('Oops');
     }
   );
 });
@@ -365,3 +76,35 @@ async function getImage(query) {
   });
   return res.response.results[0].urls.small;
 }
+
+//send email with sendgrid to invite friends
+
+app.post('/invites', (req, res) => {
+  const msg = {
+    to: req.body.to,
+    from: 'TripperAppLauren@gmail.com',
+    subject: 'Join Tripper',
+    text: 'Someone invited you to a trip',
+    html: '<strong>Click here to see the details of the trip</strong>',
+  };
+
+  console.log(msg);
+
+  sgMail
+    .send(msg)
+    .then(() => {
+      console.log('Email sent');
+      res.send({ ok: true });
+    })
+    .catch((error) => {
+      console.error('sth went wrong', error.response.body.errors);
+      res.status(500).send('bad gateway');
+    });
+});
+
+app.listen(port, (err) => {
+  if (err) {
+    throw new Error('Something went wrong');
+  }
+  console.log('ready to code');
+});
