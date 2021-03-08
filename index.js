@@ -74,7 +74,7 @@ async function getImage(query) {
   const res = await unsplash.search.getPhotos({
     query,
   });
-  return res.response.results[0].urls.small;
+  return res.response.results[0].urls.regular;
 }
 
 //send email with sendgrid to invite friends
