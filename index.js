@@ -87,9 +87,6 @@ app.post('/invites', (req, res) => {
     text: 'Someone invited you to a trip',
     html: '<strong>Click here to see the details of the trip</strong>',
   };
-
-  console.log(msg);
-
   sgMail
     .send(msg)
     .then(() => {
