@@ -79,13 +79,14 @@ async function getImage(query) {
 
 //send email with sendgrid to invite friends
 
-app.post('/invites', (req, res) => {
+app.post('/invites/:id', (req, res) => {
+  const tripId = req.params.id;
   const msg = {
     to: req.body.to,
     from: 'TripperAppLauren@gmail.com',
     subject: 'Join Tripper',
     text: 'Someone invited you to a trip',
-    html: '<strong>Click here to see the details of the trip</strong>',
+    html: `<strong>Someone invited you to a trip</strong><p>Click here to join the trip <a href="http://localhost:19006/trip-overview/${tripId}">Join</a></p>`,
   };
   sgMail
     .send(msg)
