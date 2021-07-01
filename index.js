@@ -28,6 +28,7 @@ const allowedOrigins = [
   'http://localhost:3001',
   'http://localhost:5000',
 ];
+
 const corsOptions = {
   origin: (origin, callback) => {
     if (origin === undefined || allowedOrigins.indexOf(origin) !== -1) {
@@ -96,7 +97,7 @@ app.post('/invites/:id', (req, res) => {
     })
     .catch((error) => {
       console.error('sth went wrong', error.response.body.errors);
-      res.status(500).send('bad gateway');
+      res.status(500).send('could not send email');
     });
 });
 
